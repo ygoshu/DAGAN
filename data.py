@@ -303,9 +303,45 @@ class OmniglotDAGANDataset(DAGANDataset):
                                                    gen_batches)
 
     def load_dataset(self, gan_training_index):
-        self.x = np.load("datasets/omniglot_data.npy")
-        self.x = self.x / np.max(self.x)
-        x_train, x_test, x_val = self.x[:1200], self.x[1200:1600], self.x[1600:]
+        from torchvision import datasets, transforms
+        transform = transforms.Compose([transforms.ToTensor(),
+                                transforms.Normalize((0.1307,), (0.3081,))])
+        train_set = datasets.MNIST('./data', train=True, transform=transform,  download=True)
+        a = train_set.train_data
+        print(a.size(), 'train data')
+        a.numpy() 
+        print(a.shape, 'numpified')
+        self.x = a
+        print(type(self.x), 'numped')
+        #self.x = np.load("datasets/omniglot_data.npy")
+        #self.x = self.x / np.max(self.x)
+        from collections import defaultdict
+        res = [[],[],[],[],[],[],[],[],[],[]]
+        #print(len(res))
+        dic = defaultdict(list)
+        for i, lbl in enumerate(train_set.train_labels):
+            #print(lbl)
+            #print(len(res[lbl]))
+            #print(train_set.train_data[i].t().shape)
+            if (len(res[lbl]) < 4500):
+                res[lbl].append(train_set.train_data[i].unsqueeze(0).numpy().T)
+                dic[lbl].append(train_set.train_data[i].unsqueeze(0).numpy().T) 
+        print(type(res[0]))
+        print(len(res[3]))
+        print(len(res))
+        print(len(res[4]))
+        print(res[4][83].shape)
+        res = np.array(res)
+        #res = np.array(res).reshape(10,4500, 1, 28, 28)
+        #print(np.array(res).shape , 'restructured array by class [class, sample, 1, 28, 28]')
+        print(res.shape)
+        self.x = res#np.array(res)   
+
+
+
+        #np.random.seed(13)
+        #np.random.shuffle(self.x)
+        x_train, x_test, x_val = self.x[:5], self.x[5:7], self.x[7:]
         x_train = x_train[:gan_training_index]
         return x_train, x_test, x_val
 
